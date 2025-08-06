@@ -143,8 +143,16 @@ def load_and_process_data():
     # Veriyi birleştir
     combined_df = pd.concat(datasets, ignore_index=True)
     
+    # RTX5060 filtreleme sayacı
+    rtx5060_count_before = len(combined_df[(combined_df['gpu'].str.contains('rtx5060', case=False, na=False)) & 
+                                           (combined_df['price'] < 50000)])
+    
     # Veri temizleme
     processed_df = clean_and_process_data(combined_df)
+    
+    # Session state'e filtrelenen sayıyı kaydet
+    if 'rtx5060_filtered' not in st.session_state:
+        st.session_state['rtx5060_filtered'] = rtx5060_count_before
     
     return processed_df
 
@@ -181,9 +189,16 @@ def clean_and_process_data(df):
     df['is_apple'] = df['brand'] == 'apple'
     df['has_dedicated_gpu'] = ~df['gpu_clean'].isin(['integrated', 'apple integrated', 'iris xe', 'intel uhd', 'unknown'])
     
+    # ⚡ RTX5060 FİLTRELEME - 50.000 TL altındaki RTX5060'ları şüpheli say
+    suspicious_rtx5060 = (df['gpu_clean'] == 'rtx5060') & (df['price'] < 50000)
+    df['is_suspicious_rtx5060'] = suspicious_rtx5060
+    
     # Eksik verileri temizle
     df = df.dropna(subset=['price', 'ram_gb', 'ssd_gb'])
     df = df[df['price'] > 1000]  # Minimum fiyat filtresi
+    
+    # 🚨 RTX5060 şüphelilerini çıkar
+    df = df[~df['is_suspicious_rtx5060']]
     
     return df
 
@@ -465,6 +480,11 @@ def main():
         st.error("Veri yüklenemedi!")
         return
     
+    # RTX5060 filtreleme bilgisi
+    rtx5060_filtered = st.session_state.get('rtx5060_filtered', 0)
+    if rtx5060_filtered > 0:
+        st.info(f"ℹ️ {rtx5060_filtered} adet şüpheli RTX5060 laptop (50.000 TL altı) filtrelendi.")
+    
     st.success(f"✅ {len(df)} laptop başarıyla yüklendi!")
     
     # Sidebar - Kullanıcı tercihleri
@@ -586,8 +606,13 @@ def main():
                         
                         st.markdown("**Öne Çıkan Özellikler:** " + " • ".join(features))
                         
-                        if st.button(f"🔗 Ürünü İncele", key=f"btn_{i}"):
-                            st.markdown(f"[Ürün Sayfasına Git]({laptop['url']})")
+                        # URL buton düzeltme
+                        url_button_col1, url_button_col2 = st.columns([1, 3])
+                        with url_button_col1:
+                            if st.button(f"🔗 Ürünü İncele", key=f"btn_{i}"):
+                                st.balloons()
+                        with url_button_col2:
+                            st.markdown(f"[🛒 **Satın Almak İçin Tıklayın**]({laptop['url']})", unsafe_allow_html=True)
                         
                         st.markdown("---")
     
@@ -666,8 +691,13 @@ def main():
                         
                         st.markdown("**💡 Neden fırsat?** " + " • ".join(reasons))
                         
-                        if st.button(f"🛒 Ürünü İncele", key=f"deal_{i}"):
-                            st.markdown(f"[Ürün Sayfasına Git]({deal['url']})")
+                        # URL buton düzeltme - Fırsatlar
+                        deal_url_col1, deal_url_col2 = st.columns([1, 3])
+                        with deal_url_col1:
+                            if st.button(f"🛒 Ürünü İncele", key=f"deal_{i}"):
+                                st.balloons()
+                        with deal_url_col2:
+                            st.markdown(f"[🔥 **FIRSATI KAÇIRMA - TİKLA!**]({deal['url']})", unsafe_allow_html=True)
                         
                         st.markdown("---")
     

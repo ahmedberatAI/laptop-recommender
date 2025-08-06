@@ -438,10 +438,12 @@ def calculate_laptop_score(laptop, preferences, config):
         score = 0
         weights = config.WEIGHTS
         
+        # Güvenli değer alma
+        ideal_price = (preferences['min_budget'] + preferences['max_budget']) / 2
+        
         # 1. Fiyat uygunluğu (20%)
         price_range = preferences['max_budget'] - preferences['min_budget']
         if price_range > 0:
-            ideal_price = (preferences['min_budget'] + preferences['max_budget']) / 2
             price_diff = abs(laptop['price'] - ideal_price)
             price_score = weights['price_fit'] * max(0, 1 - price_diff / (price_range / 2))
         else:
@@ -450,43 +452,65 @@ def calculate_laptop_score(laptop, preferences, config):
         
         # 2. Fiyat/performans oranı (15%)
         performance_score = (laptop['gpu_score'] * 0.6 + laptop['cpu_score'] * 0.4) / 100
-        price_perf = performance_score * (ideal_price / laptop['price']) * weights['price_performance']
+        if laptop['price'] > 0:
+            price_perf = performance_score * (ideal_price / laptop['price']) * weights['price_performance']
+        else:
+            price_perf = 0
         score += price_perf
         
         # 3. Kullanım amacına uygunluk (25%)
         purpose_multipliers = {
-            'oyun': 1.0 if laptop['is_gaming'] else 0.3,
-            'taşınabilirlik': 1.0 if laptop['is_ultrabook'] else 0.5,
-            'üretkenlik': 1.0 if laptop['is_workstation'] else 0.7,
-            'tasarım': 0.9 if laptop['is_gaming'] or laptop['is_workstation'] else 0.4
+            'oyun': 1.0 if laptop.get('is_gaming', False) else 0.3,
+            'taşınabilirlik': 1.0 if laptop.get('is_ultrabook', False) else 0.5,
+            'üretkenlik': 1.0 if laptop.get('is_workstation', False) else 0.7,
+            'tasarım': 0.9 if laptop.get('is_gaming', False) or laptop.get('is_workstation', False) else 0.4
         }
         purpose_score = weights['purpose_match'] * performance_score * purpose_multipliers.get(preferences['purpose'], 0.6)
         score += purpose_score
         
-        # 4. Donanım özellikleri (15%)
-        ram_score = weights['specs'] * 0.6 * min(laptop['ram_gb'] / 16, 1.0)
-        ssd_score = weights['specs'] * 0.4 * min(laptop['ssd_gb'] / 1024, 1.0)
-        score += ram_score + ssd_score
-        
-        # 5. Marka güvenilirliği (10%)
-        brand_score = weights['brand_reliability'] * laptop['brand_score']
-        score += brand_score
-        
-        # 6. Kullanıcı tercihleri (15%)
+        # 4. Kullanıcı tercihleri (15%) - Yeni!
         user_score = 0
-        if preferences.get('preferred_brand') and laptop['brand'] == preferences['preferred_brand'].lower():
-            user_score += weights['user_preferences'] * 0.5
-        if preferences.get('min_screen_size') and laptop['screen_size'] >= preferences['min_screen_size']:
-            user_score += weights['user_preferences'] * 0.3
-        if preferences.get('gaming_priority') and laptop['is_gaming']:
-            user_score += weights['user_preferences'] * 0.2
+        
+        # Performans tercihi
+        perf_weight = preferences.get('performance_importance', 3) / 5.0
+        user_score += weights['user_preferences'] * 0.4 * performance_score * perf_weight
+        
+        # Pil/taşınabilirlik tercihi
+        portability_factor = 1.0
+        if laptop.get('is_ultrabook', False) or laptop.get('screen_size', 15.6) <= 14:
+            portability_factor = 1.2
+        elif laptop.get('is_gaming', False):
+            portability_factor = 0.6
+        
+        battery_weight = preferences.get('battery_importance', 3) / 5.0
+        portability_weight = preferences.get('portability_importance', 3) / 5.0
+        
+        user_score += weights['user_preferences'] * 0.3 * portability_factor * battery_weight
+        user_score += weights['user_preferences'] * 0.3 * portability_factor * portability_weight
         
         score += user_score
+        
+        # 5. Donanım özellikleri (15%)
+        ram_score = weights['specs'] * 0.6 * min(laptop.get('ram_gb', 8) / 16, 1.0)
+        ssd_score = weights['specs'] * 0.4 * min(laptop.get('ssd_gb', 256) / 1024, 1.0)
+        score += ram_score + ssd_score
+        
+        # 6. Marka güvenilirliği (10%)
+        brand_score = weights['brand_reliability'] * laptop.get('brand_score', 0.7)
+        score += brand_score
+        
+        # 7. Ekstra bonuslar
+        if preferences.get('preferred_brand') and laptop.get('brand') == preferences['preferred_brand']:
+            score += 5  # Marka tercihi bonusu
+        
+        if preferences.get('gaming_priority') and laptop.get('is_gaming', False):
+            score += 3  # Gaming öncelik bonusu
         
         return max(0, min(100, score))
         
     except Exception as e:
-        return 0.0
+        st.error(f"Puan hesaplama hatası: {e}")
+        return 25.0  # Varsayılan düşük puan
 
 def find_deal_laptops(df, min_discount=15):
     """Fırsat laptop'ları bul"""
@@ -555,6 +579,13 @@ def main():
         }[x]
     )
     
+    # Kullanıcı tercihleri (1-5 puanlama)
+    st.sidebar.subheader("⭐ Öncelikleriniz (1-5)")
+    performance_importance = st.sidebar.slider("🚀 Performans Önemi", 1, 5, 4)
+    battery_importance = st.sidebar.slider("🔋 Pil Ömrü Önemi", 1, 5, 3)
+    portability_importance = st.sidebar.slider("🎒 Taşınabilirlik Önemi", 1, 5, 3)
+    price_importance = st.sidebar.slider("💰 Fiyat/Performans Önemi", 1, 5, 4)
+    
     # Gelişmiş filtreler
     with st.sidebar.expander("🔧 Gelişmiş Filtreler"):
         brands = ['Hepsi'] + sorted([b.title() for b in df['brand'].unique() if b != 'other'])
@@ -575,6 +606,10 @@ def main():
         'min_budget': min_budget,
         'max_budget': max_budget,
         'purpose': purpose,
+        'performance_importance': performance_importance,
+        'battery_importance': battery_importance,
+        'portability_importance': portability_importance,
+        'price_importance': price_importance,
         'preferred_brand': preferred_brand.lower() if preferred_brand != 'Hepsi' else None,
         'min_ram': min_ram,
         'min_ssd': min_ssd,
@@ -596,17 +631,24 @@ def main():
             (filtered_df['price'] <= max_budget)
         ]
         
+        st.write(f"🔍 Bütçe filtresi sonrası: {len(filtered_df)} laptop")
+        
         # Diğer filtreler
         if preferred_brand != 'Hepsi':
             filtered_df = filtered_df[filtered_df['brand'] == preferred_brand.lower()]
+            st.write(f"🏢 Marka filtresi sonrası: {len(filtered_df)} laptop")
         
         if preferred_source != 'Hepsi':
             filtered_df = filtered_df[filtered_df['source_display'] == preferred_source]
+            st.write(f"🛒 Kaynak filtresi sonrası: {len(filtered_df)} laptop")
         
+        # RAM/SSD filtreleri - daha esnek
         filtered_df = filtered_df[
             (filtered_df['ram_gb'] >= min_ram) &
             (filtered_df['ssd_gb'] >= min_ssd)
         ]
+        
+        st.write(f"💾 RAM/SSD filtresi sonrası: {len(filtered_df)} laptop")
         
         # Ekran boyutu filtresi
         if screen_pref != 'Hepsi':
@@ -616,9 +658,11 @@ def main():
                 filtered_df = filtered_df[(filtered_df['screen_size'] > 14.5) & (filtered_df['screen_size'] <= 16.5)]
             elif "17" in screen_pref:
                 filtered_df = filtered_df[filtered_df['screen_size'] > 16.5]
+            st.write(f"📐 Ekran filtresi sonrası: {len(filtered_df)} laptop")
         
         if gaming_priority:
             filtered_df = filtered_df[filtered_df['is_gaming'] == True]
+            st.write(f"🎮 Gaming filtresi sonrası: {len(filtered_df)} laptop")
         
         if len(filtered_df) == 0:
             st.warning("⚠️ Seçilen kriterlere uygun laptop bulunamadı!")

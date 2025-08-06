@@ -740,9 +740,9 @@ def main():
                     # Butonlar
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.link_button("🔗 Ürünü İncele", laptop['url'], use_container_width=True)
+                        st.markdown(f"[🔗 Ürünü İncele]({laptop['url']})", unsafe_allow_html=True)
                     with col2:
-                        if st.button(f"💖 Favorilere Ekle", key=f"fav_{idx}", use_container_width=True):
+                        if st.button(f"💖 Favorilere Ekle", key=f"fav_{idx}"):
                             if 'favorites' not in st.session_state:
                                 st.session_state.favorites = []
                             st.session_state.favorites.append({
@@ -826,9 +826,9 @@ def main():
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.link_button("🛒 Fırsatı Kaçırma!", deal['url'], use_container_width=True, key=f"deal_link_{idx}")
+                    st.markdown(f"[🛒 Fırsatı Kaçırma!]({deal['url']})", unsafe_allow_html=True)
                 with col2:
-                    if st.button("📋 Karşılaştır", key=f"deal_compare_{idx}", use_container_width=True):
+                    if st.button("📋 Karşılaştır", key=f"deal_compare_{idx}"):
                         st.info("Karşılaştırma özelliği yakında!")
                 
                 st.markdown("---")
@@ -1030,7 +1030,7 @@ def main():
                 with col2:
                     st.write(f"📍 {fav['source']}")
                 with col3:
-                    st.link_button("🔗", fav['url'], key=f"fav_link_{idx}")
+                    st.markdown(f"[🔗]({fav['url']})", unsafe_allow_html=True)
             
             if st.button("🗑️ Favorileri Temizle"):
                 st.session_state.favorites = []

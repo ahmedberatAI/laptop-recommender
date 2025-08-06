@@ -1,55 +1,46 @@
-# 🔥 Akıllı Laptop Öneri Sistemi
+# 💻 Akıllı Laptop Öneri Sistemi
 
-Bu uygulama, kullanıcıların ihtiyaçlarına göre en uygun laptop'ı bulmalarına yardımcı olan akıllı bir öneri sistemidir.
+AI destekli laptop öneri sistemi. Kullanıcıların ihtiyaçlarına göre en uygun laptopları önerir ve piyasa fırsatlarını tespit eder.
 
-## ✨ Özellikler
+## 🚀 Özellikler
 
-- 🎯 **Kişiselleştirilmiş Öneriler**: Bütçe, kullanım amacı ve tercihlerinize göre laptop önerileri
-- 🔥 **Fırsat Ürünler**: Piyasa analizine dayalı fırsat ürün tespiti
-- 📊 **Pazar Analizi**: Detaylı grafikler ve istatistikler
-- 🎮 **Kullanım Amaçları**: Oyun, taşınabilirlik, üretkenlik, tasarım için optimize edilmiş öneriler
-- 💰 **Akıllı Filtreleme**: Marka, RAM, SSD, işletim sistemi filtreleri
+- **Kişiselleştirilmiş Öneriler**: Bütçe, kullanım amacı ve tercihlerinize göre laptop önerileri
+- **Fırsat Tespiti**: Piyasa analizi ile en iyi fırsatları bulur
+- **İnteraktif Analiz**: Detaylı grafikler ve istatistikler
+- **Gerçek Zamanlı Veriler**: Güncel laptop veritabanı
 
-## 🚀 Nasıl Çalışır?
+## 📊 Veri Kaynakları
 
-1. **Tercihlerinizi Belirtin**: Sol panelden bütçenizi, kullanım amacınızı ve filtrelerinizi seçin
-2. **Önerileri İnceleyin**: Size özel laptop önerilerini puanlarıyla birlikte görüntüleyin
-3. **Fırsatları Keşfedin**: Güncel fırsat ürünlerini inceleyin
-4. **Pazar Analizini Görün**: Laptop piyasası hakkında detaylı bilgi alın
+- Vatan Bilgisayar
+- Amazon
+- İncehesap
 
-## 🛠️ Teknik Detaylar
+## 🛠️ Teknolojiler
 
-- **Framework**: Streamlit
-- **Veri İşleme**: Pandas, NumPy
-- **Görselleştirme**: Plotly
-- **Makine Öğrenmesi**: Scikit-learn
-- **Puanlama Algoritması**: Çok boyutlu ağırlıklı puanlama sistemi
+- **Frontend**: Streamlit
+- **Data Analysis**: Pandas, NumPy
+- **Machine Learning**: Scikit-learn
+- **Visualizations**: Plotly
+- **Deployment**: Streamlit Cloud
 
-## 📊 Puanlama Kriterleri
+## 🎯 Nasıl Kullanılır
 
-- Fiyat uygunluğu (15%)
-- Fiyat/performans oranı (10%)
-- Kullanım amacına uygunluk (30%)
-- Donanım özellikleri (10%)
-- Marka güvenilirliği (8%)
-- Kullanıcı tercihleri (27%)
+1. Bütçenizi belirleyin
+2. Kullanım amacınızı seçin (Oyun, Üretkenlik, Tasarım, Taşınabilirlik)
+3. Önem derecelerini ayarlayın
+4. Gelişmiş filtrelerle daha spesifik arama yapın
+5. Size özel önerileri inceleyin!
 
-## 💻 Yerel Çalıştırma
+## 🔧 Kurulum
 
 ```bash
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-## 🌐 Online Uygulama
-
-Uygulamayı [Streamlit Cloud](https://streamlit.io/) üzerinden çevrimiçi olarak kullanabilirsiniz.
-
 ## 📝 Lisans
 
-Bu proje açık kaynak olarak geliştirilmiştir.
+MIT License - Kişisel ve ticari kullanım için uygundur.
 
 ---
-
-🚀 **Geliştirici**: AI Destekli Geliştirme Ekibi  
-📅 **Tarih**: 2024
+**🤖 AI Powered Laptop Recommendations**
